@@ -1,4 +1,6 @@
-flask
-pytest
-numpy
 pandas
+numpy
+matplotlib
+seaborn
+plotly
+scipy
