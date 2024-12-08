@@ -232,20 +232,13 @@ os.makedirs(output_dir, exist_ok=True)
 
 # Function to clean the dataset
 def clean_dataset(dataset, name):
-    # Check for missing values
     missing_values = dataset.isnull().sum()
     print(f"Missing values in {name} dataset:\n{missing_values}\n")
 
-    # Drop columns that are entirely null (like the 'Comments' column if it's completely null)
     if dataset['Comments'].isnull().all():
         print(f"Dropping 'Comments' column in {name} because it's entirely null.")
         dataset.drop(columns=['Comments'], inplace=True)
 
-    # Handle missing values for other columns:
-    # Option 1: Drop rows with missing critical columns (if applicable, modify columns based on dataset)
-    # dataset.dropna(subset=['GHI', 'DNI'], inplace=True)  # For example, drop rows with missing 'GHI' or 'DNI'
-    
-    # Option 2: Fill missing values in non-critical columns (use mean, median, or mode depending on the context)
     dataset.fillna({
         'GHI': dataset['GHI'].mean(),
         'DNI': dataset['DNI'].mean(),
@@ -254,27 +247,20 @@ def clean_dataset(dataset, name):
         'RH': dataset['RH'].mean()
     }, inplace=True)
     
-    # Handle anomalies (e.g., negative values or values that are too high)
-    # For example, temperature should not be negative, GHI should be non-negative
-    dataset.loc[dataset['Tamb'] < 0, 'Tamb'] = dataset['Tamb'].mean()  # Replace negative temperatures with the mean
-    dataset.loc[dataset['GHI'] < 0, 'GHI'] = 0  # Set negative GHI values to 0
-    dataset.loc[dataset['DNI'] < 0, 'DNI'] = 0  # Set negative DNI values to 0
+    dataset.loc[dataset['Tamb'] < 0, 'Tamb'] = dataset['Tamb'].mean()
+    dataset.loc[dataset['GHI'] < 0, 'GHI'] = 0
+    dataset.loc[dataset['DNI'] < 0, 'DNI'] = 0
     
-    # If there are outliers or anomalies that should be handled, you can add more checks here:
-    # Example: Setting an upper threshold for radiation values
-    dataset.loc[dataset['GHI'] > 2000, 'GHI'] = 2000  # Set high GHI values to 2000
-    dataset.loc[dataset['DNI'] > 2000, 'DNI'] = 2000  # Set high DNI values to 2000
+    dataset.loc[dataset['GHI'] > 2000, 'GHI'] = 2000
+    dataset.loc[dataset['DNI'] > 2000, 'DNI'] = 2000
     
-    # Check if there are any anomalies after cleaning
     print(f"Cleaned {name} dataset:\n{dataset.head()}\n")
     
-    # Save the cleaned dataset to a new CSV file
     cleaned_file = f"output/{name.lower().replace(' ', '_')}_cleaned.csv"
     dataset.to_csv(cleaned_file, index=False)
     print(f"Cleaned dataset for {name} saved at {cleaned_file}\n")
     
     return dataset
 
-# Example usage with datasets for Benin, Sierra Leone, and Togo
 for name, dataset in zip(["Benin", "Sierra Leone", "Togo"], [data_benin, data_sierraleone, data_togo]):
     cleaned_data = clean_dataset(dataset, name)
