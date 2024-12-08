@@ -151,3 +151,80 @@ os.makedirs(output_dir, exist_ok=True)
 #         plt.clf()
 #     else:
 #         print(f"Skipping RH vs Temp plot for {name} as 'RH' or 'Tamb' is missing.")
+
+
+# Function for creating histograms (only for key columns)
+def plot_histograms(dataset, name, columns=None, max_plots=2):
+    if columns is None:
+        columns = ['GHI', 'DNI', 'DHI', 'WS', 'Tamb'] 
+    
+    for idx, col in enumerate(columns[:max_plots]):
+        if col in dataset.columns:
+            plt.figure(figsize=(10, 6))
+            sns.histplot(dataset[col].dropna(), kde=True, color='blue', bins=30)
+            plt.title(f"Histogram of {col} for {name}", fontsize=16)
+            plt.xlabel(col)
+            plt.ylabel("Frequency")
+            plt.grid(True)
+            
+            output_file = os.path.join(output_dir, f"{name.lower().replace(' ', '_')}_{col}_histogram.png")
+            plt.savefig(output_file)
+            print(f"Histogram of {col} saved for {name} at {output_file}")
+            
+            plt.close()
+
+# Function for Z-Score Analysis (only for key columns)
+def plot_z_scores(dataset, name, columns=None, max_plots=2):
+    if columns is None:
+        columns = ['GHI', 'DNI', 'DHI', 'WS', 'Tamb'] 
+    
+    for idx, col in enumerate(columns[:max_plots]): 
+        if col in dataset.columns:
+            z_scores = (dataset[col] - dataset[col].mean()) / dataset[col].std()
+            plt.figure(figsize=(10, 6))
+            sns.histplot(z_scores.dropna(), kde=True, color='red', bins=30)
+            plt.title(f"Z-Score Distribution of {col} for {name}", fontsize=16)
+            plt.xlabel("Z-Score")
+            plt.ylabel("Frequency")
+            plt.grid(True)
+
+            output_file = os.path.join(output_dir, f"{name.lower().replace(' ', '_')}_{col}_zscore.png")
+            plt.savefig(output_file)
+            print(f"Z-Score plot of {col} saved for {name} at {output_file}")
+            
+            plt.close()
+
+# Function for Bubble Chart (only if all required columns are present)
+def plot_bubble_chart(dataset, name, max_plots=1):
+    required_columns = ['GHI', 'Tamb', 'WS', 'RH']
+    if all(col in dataset.columns for col in required_columns):
+        for idx in range(max_plots): 
+            plt.figure(figsize=(10, 6))
+            
+            plt.scatter(
+                dataset['GHI'], dataset['Tamb'], 
+                s=dataset['RH'] * 10,  
+                c=dataset['WS'], cmap='viridis', alpha=0.6, edgecolors="w", linewidth=0.5
+            )
+            plt.title(f"Bubble Chart for {name}: GHI vs Tamb vs WS", fontsize=16)
+            plt.xlabel("GHI (Solar Radiation)")
+            plt.ylabel("Tamb (Temperature)")
+            plt.colorbar(label="Wind Speed (WS)")
+            plt.grid(True)
+
+            output_file = os.path.join(output_dir, f"{name.lower().replace(' ', '_')}_ghi_vs_tamb_vs_ws_bubble.png")
+            plt.savefig(output_file)
+            print(f"Bubble chart saved for {name} at {output_file}")
+            
+            plt.close()
+
+# Execute the functions for each dataset
+for name, dataset in zip(["Benin", "Sierra Leone", "Togo"], [data_benin, data_sierraleone, data_togo]):
+    # Generate histograms for key columns (GHI, DNI, DHI, WS, Tamb), limiting to 2 histograms per dataset
+    plot_histograms(dataset, name, max_plots=2)
+    
+    # Perform Z-Score analysis for key columns (GHI, DNI, DHI, WS, Tamb), limiting to 2 Z-score plots per dataset
+    plot_z_scores(dataset, name, max_plots=2)
+    
+    # Generate one bubble chart per dataset
+    plot_bubble_chart(dataset, name, max_plots=1)
